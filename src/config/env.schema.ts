@@ -63,6 +63,8 @@ export const envSchema = dbEnvSchema
     JWT_ACCESS_TTL: duration,
     JWT_REFRESH_SECRET: jwtSecret,
     JWT_REFRESH_TTL: duration,
+    /** How long an expired refresh-token row is kept before the nightly purge deletes it. */
+    REFRESH_TOKEN_RETENTION: z.string().default('7d').pipe(duration),
   })
   .refine((env) => env.JWT_ACCESS_SECRET !== env.JWT_REFRESH_SECRET, {
     message: 'must differ from JWT_ACCESS_SECRET',

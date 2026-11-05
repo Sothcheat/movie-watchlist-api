@@ -6,6 +6,7 @@ import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { PasswordService } from './password.service.js';
+import { RefreshTokenCleanupService } from './refresh-token-cleanup.service.js';
 import { RefreshToken } from './refresh-token.entity.js';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
@@ -23,6 +24,7 @@ import { LocalStrategy } from './strategies/local.strategy.js';
   providers: [
     AuthService,
     PasswordService,
+    RefreshTokenCleanupService,
     LocalStrategy,
     JwtStrategy,
     JwtRefreshStrategy,

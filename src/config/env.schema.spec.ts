@@ -119,6 +119,25 @@ describe('JWT settings', () => {
   });
 });
 
+describe('REFRESH_TOKEN_RETENTION', () => {
+  it('defaults to 7 days when unset', () => {
+    expect(envSchema.parse(valid).REFRESH_TOKEN_RETENTION).toBe(604800);
+  });
+
+  it('parses a custom value to seconds', () => {
+    expect(
+      envSchema.parse({ ...valid, REFRESH_TOKEN_RETENTION: '30d' })
+        .REFRESH_TOKEN_RETENTION,
+    ).toBe(2592000);
+  });
+
+  it.each(['7', '1w', '0d', ''])('rejects %j', (value) => {
+    expect(
+      envSchema.safeParse({ ...valid, REFRESH_TOKEN_RETENTION: value }).success,
+    ).toBe(false);
+  });
+});
+
 describe('dbEnvSchema', () => {
   it('does not require app-only variables such as PORT', () => {
     expect(dbEnvSchema.safeParse(valid).success).toBe(true);

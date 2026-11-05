@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { minutes, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
@@ -19,6 +20,8 @@ import { UsersModule } from './users/users.module.js';
     }),
     // Default limit per client IP; auth routes tighten it with @Throttle().
     ThrottlerModule.forRoot({ throttlers: [{ ttl: minutes(1), limit: 100 }] }),
+    // Call forRoot() once only: each extra import would register every @Cron job again.
+    ScheduleModule.forRoot(),
     CommonModule,
     DatabaseModule,
     UsersModule,

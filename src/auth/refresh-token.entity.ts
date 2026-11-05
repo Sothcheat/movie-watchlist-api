@@ -32,6 +32,8 @@ export class RefreshToken {
   @Column({ name: 'family_id', type: 'uuid' })
   familyId: string;
 
+  /** Indexed so the nightly purge can find expired rows without scanning the table. */
+  @Index()
   @Column({ name: 'expires_at', type: 'timestamptz' })
   expiresAt: Date;
 
