@@ -5,6 +5,10 @@ const valid = {
   DB_PASSWORD: 'secret',
   DB_NAME: 'movie_watchlist',
   CORS_ORIGINS: 'http://localhost:3000',
+  JWT_ACCESS_SECRET: 'a'.repeat(32),
+  JWT_ACCESS_TTL: '15m',
+  JWT_REFRESH_SECRET: 'r'.repeat(32),
+  JWT_REFRESH_TTL: '7d',
 };
 
 describe('envSchema', () => {
@@ -73,6 +77,45 @@ describe('CORS_ORIGINS', () => {
     ['a value that is not a URL', 'localhost:3000'],
   ])('rejects %s', (_label, value) => {
     expect(parse(value).success).toBe(false);
+  });
+});
+
+describe('JWT settings', () => {
+  it.each([
+    ['30s', 30],
+    ['15m', 900],
+    ['12h', 43200],
+    ['7d', 604800],
+  ])('parses the TTL %s to %i seconds', (ttl, seconds) => {
+    expect(
+      envSchema.parse({ ...valid, JWT_ACCESS_TTL: ttl }).JWT_ACCESS_TTL,
+    ).toBe(seconds);
+  });
+
+  it.each(['15', '15 m', '1w', '-5m', '0m', ''])(
+    'rejects the TTL %j',
+    (ttl) => {
+      expect(
+        envSchema.safeParse({ ...valid, JWT_REFRESH_TTL: ttl }).success,
+      ).toBe(false);
+    },
+  );
+
+  it('rejects a secret shorter than 32 characters', () => {
+    expect(
+      envSchema.safeParse({ ...valid, JWT_ACCESS_SECRET: 'a'.repeat(31) })
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects the same secret for access and refresh tokens', () => {
+    const result = envSchema.safeParse({
+      ...valid,
+      JWT_REFRESH_SECRET: valid.JWT_ACCESS_SECRET,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(['JWT_REFRESH_SECRET']);
   });
 });
 
