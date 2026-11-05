@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
 import { CommonModule } from './common/common.module.js';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
+import { HealthModule } from './health/health.module.js';
 import { TmdbModule } from './tmdb/tmdb.module.js';
 import { UsersModule } from './users/users.module.js';
 import { WatchlistModule } from './watchlist/watchlist.module.js';
@@ -30,6 +31,7 @@ import { WatchlistModule } from './watchlist/watchlist.module.js';
     AuthModule,
     TmdbModule,
     WatchlistModule,
+    HealthModule,
   ],
   providers: [
     // Order matters: rate limiting runs before authentication.

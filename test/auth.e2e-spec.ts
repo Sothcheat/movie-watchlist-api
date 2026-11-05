@@ -34,7 +34,7 @@ describe('Auth (e2e)', () => {
   describe('POST /auth/register', () => {
     it('creates the user with an argon2id hash, never the plain password', async () => {
       await http()
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ email: 'New.User@Example.com', password: PASSWORD })
         .expect(201, { message: 'Registration received' });
 
@@ -51,9 +51,12 @@ describe('Auth (e2e)', () => {
 
     it('answers a duplicate email exactly like a new one and creates no second user', async () => {
       const body = { email: 'dup@example.com', password: PASSWORD };
-      const first = await http().post('/auth/register').send(body).expect(201);
+      const first = await http()
+        .post('/api/auth/register')
+        .send(body)
+        .expect(201);
       const second = await http()
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({
           ...body,
           email: 'DUP@example.com',
@@ -65,7 +68,7 @@ describe('Auth (e2e)', () => {
       expect(await userRows('dup@example.com')).toHaveLength(1);
       // The existing account keeps its original password.
       await http()
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: 'dup@example.com', password: PASSWORD })
         .expect(200);
     });
@@ -88,17 +91,17 @@ describe('Auth (e2e)', () => {
         { email: 'a@example.com', password: PASSWORD, role: 'admin' },
       ],
     ])('rejects %s with 400 and creates nothing', async (_label, body) => {
-      await http().post('/auth/register').send(body).expect(400);
+      await http().post('/api/auth/register').send(body).expect(400);
       expect(await db.query('SELECT 1 FROM users')).toHaveLength(0);
     });
 
     it('accepts the boundary lengths 8 and 128', async () => {
       await http()
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ email: 'min@example.com', password: 'a'.repeat(8) })
         .expect(201);
       await http()
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ email: 'max@example.com', password: 'a'.repeat(128) })
         .expect(201);
     });
@@ -107,12 +110,12 @@ describe('Auth (e2e)', () => {
   describe('POST /auth/login', () => {
     it('returns the access token in the body and the refresh token only in an HttpOnly cookie', async () => {
       await http()
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ email: 'login@example.com', password: PASSWORD })
         .expect(201);
 
       const res = await http()
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: 'LOGIN@example.com', password: PASSWORD })
         .expect(200);
 
@@ -126,23 +129,23 @@ describe('Auth (e2e)', () => {
       const cookie = setCookieLine(res);
       expect(cookie).toMatch(/HttpOnly/i);
       expect(cookie).toMatch(/SameSite=Strict/i);
-      expect(cookie).toMatch(/Path=\/auth(;|$)/);
+      expect(cookie).toMatch(/Path=\/api\/auth(;|$)/);
       expect(cookie).toMatch(/Max-Age=604800/i);
       expect(JSON.stringify(res.body)).not.toContain('refresh');
     });
 
     it('gives the same 401 for a wrong password and an unknown email', async () => {
       await http()
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({ email: 'known@example.com', password: PASSWORD })
         .expect(201);
 
       const wrongPassword = await http()
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: 'known@example.com', password: 'not the password' })
         .expect(401);
       const unknownEmail = await http()
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: 'nobody@example.com', password: PASSWORD })
         .expect(401);
 
@@ -159,7 +162,7 @@ describe('Auth (e2e)', () => {
         { email: 'a@example.com', password: 'a'.repeat(100_000) },
       ],
     ])('rejects %s with 401', async (_label, body) => {
-      await http().post('/auth/login').send(body).expect(401);
+      await http().post('/api/auth/login').send(body).expect(401);
     });
   });
 
@@ -167,11 +170,11 @@ describe('Auth (e2e)', () => {
     const jwt = new JwtService();
 
     it('GET /auth/me needs a token and returns the profile without the hash', async () => {
-      await http().get('/auth/me').expect(401);
+      await http().get('/api/auth/me').expect(401);
 
       const session = await signUp(app, 'me');
       const res = await http()
-        .get('/auth/me')
+        .get('/api/auth/me')
         .set(...bearer(session))
         .expect(200);
 
@@ -212,7 +215,7 @@ describe('Auth (e2e)', () => {
       ],
     ])('rejects %s with 401', async (_label, makeToken) => {
       await http()
-        .get('/auth/me')
+        .get('/api/auth/me')
         .set('Authorization', `Bearer ${await makeToken()}`)
         .expect(401);
     });
@@ -222,7 +225,7 @@ describe('Auth (e2e)', () => {
       const token = session.refreshCookie.replace('refresh_token=', '');
 
       await http()
-        .get('/auth/me')
+        .get('/api/auth/me')
         .set('Authorization', `Bearer ${token}`)
         .expect(401);
     });
@@ -232,7 +235,7 @@ describe('Auth (e2e)', () => {
       await db.query('DELETE FROM users WHERE email = $1', [session.email]);
 
       await http()
-        .get('/auth/me')
+        .get('/api/auth/me')
         .set(...bearer(session))
         .expect(401);
     });
@@ -243,35 +246,38 @@ describe('Auth (e2e)', () => {
       const session = await signUp(app, 'rotate');
 
       const res = await http()
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', session.refreshCookie)
         .expect(200);
 
       const newCookie = cookieHeader(setCookieLine(res));
       expect(newCookie).not.toBe(session.refreshCookie);
       await http()
-        .get('/auth/me')
+        .get('/api/auth/me')
         .set('Authorization', `Bearer ${res.body.accessToken}`)
         .expect(200);
-      await http().post('/auth/refresh').set('Cookie', newCookie).expect(200);
+      await http()
+        .post('/api/auth/refresh')
+        .set('Cookie', newCookie)
+        .expect(200);
     });
 
     it('treats a replayed token as theft and revokes the whole family', async () => {
       const session = await signUp(app, 'reuse');
       const rotated = await http()
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', session.refreshCookie)
         .expect(200);
       const newest = cookieHeader(setCookieLine(rotated));
 
       // An attacker replays the original, already-used token.
       await http()
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', session.refreshCookie)
         .expect(401);
 
       // The legitimate holder's newest token is dead too: the family is revoked.
-      await http().post('/auth/refresh').set('Cookie', newest).expect(401);
+      await http().post('/api/auth/refresh').set('Cookie', newest).expect(401);
       const [{ live }] = await db.query(
         'SELECT count(*)::int AS live FROM refresh_tokens WHERE revoked_at IS NULL',
       );
@@ -282,8 +288,8 @@ describe('Auth (e2e)', () => {
       const session = await signUp(app, 'race');
 
       const results = await Promise.all([
-        http().post('/auth/refresh').set('Cookie', session.refreshCookie),
-        http().post('/auth/refresh').set('Cookie', session.refreshCookie),
+        http().post('/api/auth/refresh').set('Cookie', session.refreshCookie),
+        http().post('/api/auth/refresh').set('Cookie', session.refreshCookie),
       ]);
 
       expect(results.map((r) => r.status).sort((a, b) => a - b)).toEqual([
@@ -294,21 +300,21 @@ describe('Auth (e2e)', () => {
     it("does not touch another login's tokens when a family is revoked", async () => {
       const first = await signUp(app, 'multi');
       const secondLogin = await http()
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({ email: first.email, password: PASSWORD })
         .expect(200);
       const second = cookieHeader(setCookieLine(secondLogin));
 
       await http()
-        .post('/auth/logout')
+        .post('/api/auth/logout')
         .set('Cookie', first.refreshCookie)
         .expect(204);
 
       await http()
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', first.refreshCookie)
         .expect(401);
-      await http().post('/auth/refresh').set('Cookie', second).expect(200);
+      await http().post('/api/auth/refresh').set('Cookie', second).expect(200);
     });
 
     it.each([
@@ -316,7 +322,7 @@ describe('Auth (e2e)', () => {
       ['an empty cookie', 'refresh_token='],
       ['a garbage cookie', 'refresh_token=not.a.jwt'],
     ])('rejects %s with 401', async (_label, cookie) => {
-      const req = http().post('/auth/refresh');
+      const req = http().post('/api/auth/refresh');
       await (cookie ? req.set('Cookie', cookie) : req).expect(401);
     });
 
@@ -324,7 +330,7 @@ describe('Auth (e2e)', () => {
       const session = await signUp(app, 'wrongcookie');
 
       await http()
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', `refresh_token=${session.accessToken}`)
         .expect(401);
     });
@@ -336,7 +342,7 @@ describe('Auth (e2e)', () => {
       );
 
       await http()
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', session.refreshCookie)
         .expect(401);
     });
@@ -347,22 +353,22 @@ describe('Auth (e2e)', () => {
       const session = await signUp(app, 'logout');
 
       const res = await http()
-        .post('/auth/logout')
+        .post('/api/auth/logout')
         .set('Cookie', session.refreshCookie)
         .expect(204);
 
       const cleared = setCookieLine(res);
       expect(cleared).toMatch(/^refresh_token=;/);
-      expect(cleared).toMatch(/Path=\/auth/);
+      expect(cleared).toMatch(/Path=\/api\/auth/);
       expect(cleared).toMatch(/Expires=Thu, 01 Jan 1970/);
       await http()
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', session.refreshCookie)
         .expect(401);
     });
 
     it('needs a refresh cookie', async () => {
-      await http().post('/auth/logout').expect(401);
+      await http().post('/api/auth/logout').expect(401);
     });
   });
 });

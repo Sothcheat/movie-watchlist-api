@@ -4,7 +4,6 @@ const valid = {
   DB_USER: 'postgres',
   DB_PASSWORD: 'secret',
   DB_NAME: 'movie_watchlist',
-  CORS_ORIGINS: 'http://localhost:3000',
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   JWT_ACCESS_TTL: '15m',
   JWT_REFRESH_SECRET: 'r'.repeat(32),
@@ -32,7 +31,7 @@ describe('envSchema', () => {
     expect(env.DB_PORT).toBe(5433);
   });
 
-  it.each(['DB_USER', 'DB_PASSWORD', 'DB_NAME', 'CORS_ORIGINS'])(
+  it.each(['DB_USER', 'DB_PASSWORD', 'DB_NAME'])(
     'rejects a missing %s',
     (key) => {
       const { [key]: _omitted, ...rest } = valid as Record<string, string>;
@@ -54,30 +53,6 @@ describe('envSchema', () => {
     expect(envSchema.safeParse({ ...valid, PORT: '70000' }).success).toBe(
       false,
     );
-  });
-});
-
-describe('CORS_ORIGINS', () => {
-  const parse = (CORS_ORIGINS: string) =>
-    envSchema.safeParse({ ...valid, CORS_ORIGINS });
-
-  it('splits a comma-separated list and trims whitespace', () => {
-    const result = parse('http://localhost:3000, https://app.example.com ');
-
-    expect(result.data?.CORS_ORIGINS).toEqual([
-      'http://localhost:3000',
-      'https://app.example.com',
-    ]);
-  });
-
-  it.each([
-    ['a wildcard', '*'],
-    ['an empty value', ''],
-    ['a trailing slash', 'https://app.example.com/'],
-    ['a path', 'https://app.example.com/app'],
-    ['a value that is not a URL', 'localhost:3000'],
-  ])('rejects %s', (_label, value) => {
-    expect(parse(value).success).toBe(false);
   });
 });
 

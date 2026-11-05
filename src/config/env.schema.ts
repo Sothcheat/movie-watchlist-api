@@ -17,27 +17,6 @@ const duration = z
 /** HS256 signing secret. The app enforces 32+ characters; generate 32 random bytes (see .env.example). */
 const jwtSecret = z.string().min(32);
 
-/** Comma-separated browser origins. Exact origins only: no wildcard, path or trailing slash. */
-const corsOrigins = z
-  .string()
-  .transform((value) =>
-    value
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean),
-  )
-  .pipe(
-    z
-      .array(
-        z.url().refine(
-          // z.url() doesn't stop this check from running on a bad value, so guard the parse.
-          (origin) => URL.canParse(origin) && new URL(origin).origin === origin,
-          'must be an origin such as https://example.com',
-        ),
-      )
-      .min(1),
-  );
-
 /** Variables the TypeORM CLI needs. Kept separate so migrations don't require app-only secrets. */
 export const dbEnvSchema = z.object({
   NODE_ENV: z
@@ -54,7 +33,6 @@ export const dbEnvSchema = z.object({
 export const envSchema = dbEnvSchema
   .extend({
     PORT: port.default(3000),
-    CORS_ORIGINS: corsOrigins,
     JWT_ACCESS_SECRET: jwtSecret,
     JWT_ACCESS_TTL: duration,
     JWT_REFRESH_SECRET: jwtSecret,

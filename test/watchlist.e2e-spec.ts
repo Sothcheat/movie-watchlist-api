@@ -36,7 +36,7 @@ describe('Watchlist (e2e)', () => {
 
   const add = async (session: Session, tmdbId: number, priority?: string) => {
     const res = await http()
-      .post('/watchlist')
+      .post('/api/watchlist')
       .set(...bearer(session))
       .send({ tmdbId, priority })
       .expect(201);
@@ -45,11 +45,11 @@ describe('Watchlist (e2e)', () => {
 
   describe('authentication', () => {
     it.each([
-      ['GET', '/watchlist'],
-      ['GET', `/watchlist/${MISSING_ID}`],
-      ['POST', '/watchlist'],
-      ['PATCH', `/watchlist/${MISSING_ID}`],
-      ['DELETE', `/watchlist/${MISSING_ID}`],
+      ['GET', '/api/watchlist'],
+      ['GET', `/api/watchlist/${MISSING_ID}`],
+      ['POST', '/api/watchlist'],
+      ['PATCH', `/api/watchlist/${MISSING_ID}`],
+      ['DELETE', `/api/watchlist/${MISSING_ID}`],
     ] as const)('%s %s returns 401 without a token', async (method, path) => {
       const req =
         http()[method.toLowerCase() as 'get' | 'post' | 'patch' | 'delete'](
@@ -64,7 +64,7 @@ describe('Watchlist (e2e)', () => {
 
     it('returns 401 for an invalid token and does not touch the database', async () => {
       await http()
-        .post('/watchlist')
+        .post('/api/watchlist')
         .set('Authorization', 'Bearer not.a.jwt')
         .send({ tmdbId: DUNE.tmdbId })
         .expect(401);
@@ -78,7 +78,7 @@ describe('Watchlist (e2e)', () => {
       const emit = vi.spyOn(app.get(EventEmitter2), 'emit');
 
       const res = await http()
-        .post('/watchlist')
+        .post('/api/watchlist')
         .set(...bearer(alice))
         .send({ tmdbId: DUNE.tmdbId })
         .expect(201);
@@ -116,7 +116,7 @@ describe('Watchlist (e2e)', () => {
 
     it('uses the requested priority', async () => {
       await http()
-        .post('/watchlist')
+        .post('/api/watchlist')
         .set(...bearer(alice))
         .send({ tmdbId: DUNE_PART_TWO.tmdbId, priority: 'high' })
         .expect(201)
@@ -125,7 +125,7 @@ describe('Watchlist (e2e)', () => {
 
     it('stores a movie with no poster or overview as nulls', async () => {
       const res = await http()
-        .post('/watchlist')
+        .post('/api/watchlist')
         .set(...bearer(alice))
         .send({ tmdbId: THE_MATRIX.tmdbId })
         .expect(201);
@@ -138,7 +138,7 @@ describe('Watchlist (e2e)', () => {
       await add(alice, DUNE.tmdbId);
 
       const res = await http()
-        .post('/watchlist')
+        .post('/api/watchlist')
         .set(...bearer(alice))
         .send({ tmdbId: DUNE.tmdbId })
         .expect(409);
@@ -150,7 +150,7 @@ describe('Watchlist (e2e)', () => {
     it('lets the unique constraint settle two simultaneous adds: one 201, one 409', async () => {
       const send = () =>
         http()
-          .post('/watchlist')
+          .post('/api/watchlist')
           .set(...bearer(alice))
           .send({ tmdbId: DUNE.tmdbId });
 
@@ -171,7 +171,7 @@ describe('Watchlist (e2e)', () => {
 
     it('returns 404 for a movie TMDB does not have, and saves nothing', async () => {
       const res = await http()
-        .post('/watchlist')
+        .post('/api/watchlist')
         .set(...bearer(alice))
         .send({ tmdbId: 2147483647 })
         .expect(404);
@@ -195,7 +195,7 @@ describe('Watchlist (e2e)', () => {
       ['watched set on create', { tmdbId: DUNE.tmdbId, watched: true }],
     ])('rejects %s with 400 and saves nothing', async (_label, body) => {
       await http()
-        .post('/watchlist')
+        .post('/api/watchlist')
         .set(...bearer(alice))
         .send(body)
         .expect(400);
@@ -207,7 +207,7 @@ describe('Watchlist (e2e)', () => {
   describe('GET /watchlist', () => {
     it('returns an empty page for a new user', async () => {
       const res = await http()
-        .get('/watchlist')
+        .get('/api/watchlist')
         .set(...bearer(alice))
         .expect(200);
 
@@ -220,7 +220,7 @@ describe('Watchlist (e2e)', () => {
       await add(bob, DUNE_PART_TWO.tmdbId);
 
       const res = await http()
-        .get('/watchlist')
+        .get('/api/watchlist')
         .set(...bearer(alice))
         .expect(200);
 
@@ -230,7 +230,7 @@ describe('Watchlist (e2e)', () => {
         'Dune',
       ]);
       const bobs = await http()
-        .get('/watchlist')
+        .get('/api/watchlist')
         .set(...bearer(bob))
         .expect(200);
       expect(bobs.body.items.map((i: { title: string }) => i.title)).toEqual([
@@ -244,11 +244,11 @@ describe('Watchlist (e2e)', () => {
       }
 
       const first = await http()
-        .get('/watchlist?limit=2')
+        .get('/api/watchlist?limit=2')
         .set(...bearer(alice))
         .expect(200);
       const second = await http()
-        .get('/watchlist?limit=2&page=2')
+        .get('/api/watchlist?limit=2&page=2')
         .set(...bearer(alice))
         .expect(200);
 
@@ -266,19 +266,19 @@ describe('Watchlist (e2e)', () => {
       const dune = await add(alice, DUNE.tmdbId, 'high');
       await add(alice, THE_MATRIX.tmdbId, 'low');
       await http()
-        .patch(`/watchlist/${dune.id}`)
+        .patch(`/api/watchlist/${dune.id}`)
         .set(...bearer(alice))
         .send({ watched: true })
         .expect(200);
 
       const high = await http()
-        .get('/watchlist?priority=high')
+        .get('/api/watchlist?priority=high')
         .set(...bearer(alice));
       const watched = await http()
-        .get('/watchlist?watched=true')
+        .get('/api/watchlist?watched=true')
         .set(...bearer(alice));
       const unwatched = await http()
-        .get('/watchlist?watched=false')
+        .get('/api/watchlist?watched=false')
         .set(...bearer(alice));
 
       expect(high.body.items.map((i: { title: string }) => i.title)).toEqual([
@@ -301,7 +301,7 @@ describe('Watchlist (e2e)', () => {
       ['an unknown parameter such as userId', '?userId=someone'],
     ])('rejects %s with 400', async (_label, qs) => {
       await http()
-        .get(`/watchlist${qs}`)
+        .get(`/api/watchlist${qs}`)
         .set(...bearer(alice))
         .expect(400);
     });
@@ -312,7 +312,7 @@ describe('Watchlist (e2e)', () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       const res = await http()
-        .get(`/watchlist/${id}`)
+        .get(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .expect(200);
 
@@ -325,7 +325,7 @@ describe('Watchlist (e2e)', () => {
 
     it('returns 404 for an item that does not exist', async () => {
       const res = await http()
-        .get(`/watchlist/${MISSING_ID}`)
+        .get(`/api/watchlist/${MISSING_ID}`)
         .set(...bearer(alice))
         .expect(404);
 
@@ -338,11 +338,11 @@ describe('Watchlist (e2e)', () => {
 
     it('returns 400 for an id that is not a UUID', async () => {
       await http()
-        .get('/watchlist/123')
+        .get('/api/watchlist/123')
         .set(...bearer(alice))
         .expect(400);
       await http()
-        .get("/watchlist/1'%20OR%20'1'='1")
+        .get("/api/watchlist/1'%20OR%20'1'='1")
         .set(...bearer(alice))
         .expect(400);
     });
@@ -351,11 +351,11 @@ describe('Watchlist (e2e)', () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       const res = await http()
-        .get(`/watchlist/${id}`)
+        .get(`/api/watchlist/${id}`)
         .set(...bearer(bob))
         .expect(404);
       const missing = await http()
-        .get(`/watchlist/${MISSING_ID}`)
+        .get(`/api/watchlist/${MISSING_ID}`)
         .set(...bearer(bob))
         .expect(404);
 
@@ -368,7 +368,7 @@ describe('Watchlist (e2e)', () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       const res = await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .send({ watched: true, rating: 9, priority: 'low' })
         .expect(200);
@@ -386,12 +386,12 @@ describe('Watchlist (e2e)', () => {
     it('clears watchedAt when watched goes back to false, and clears a rating with null', async () => {
       const { id } = await add(alice, DUNE.tmdbId);
       await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .send({ watched: true, rating: 8 });
 
       const res = await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .send({ watched: false, rating: null })
         .expect(200);
@@ -406,12 +406,12 @@ describe('Watchlist (e2e)', () => {
     it('keeps the first watchedAt when watched is set to true again, and leaves omitted fields alone', async () => {
       const { id } = await add(alice, DUNE.tmdbId);
       const first = await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .send({ watched: true, rating: 7 });
 
       const again = await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .send({ watched: true })
         .expect(200);
@@ -423,7 +423,7 @@ describe('Watchlist (e2e)', () => {
     it('never changes the TMDB snapshot', async () => {
       const { id } = await add(alice, DUNE.tmdbId);
       await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .send({ rating: 5 })
         .expect(200);
@@ -455,7 +455,7 @@ describe('Watchlist (e2e)', () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .send(body)
         .expect(400);
@@ -468,7 +468,7 @@ describe('Watchlist (e2e)', () => {
 
     it('returns 404 for an item that does not exist', async () => {
       await http()
-        .patch(`/watchlist/${MISSING_ID}`)
+        .patch(`/api/watchlist/${MISSING_ID}`)
         .set(...bearer(alice))
         .send({ watched: true })
         .expect(404);
@@ -478,7 +478,7 @@ describe('Watchlist (e2e)', () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       await http()
-        .patch(`/watchlist/${id}`)
+        .patch(`/api/watchlist/${id}`)
         .set(...bearer(bob))
         .send({ rating: 1, watched: true })
         .expect(404);
@@ -496,17 +496,17 @@ describe('Watchlist (e2e)', () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       const res = await http()
-        .delete(`/watchlist/${id}`)
+        .delete(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .expect(204);
 
       expect(res.text).toBe('');
       await http()
-        .get(`/watchlist/${id}`)
+        .get(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .expect(404);
       await http()
-        .delete(`/watchlist/${id}`)
+        .delete(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .expect(404);
       expect(await db.query('SELECT 1 FROM watchlist_items')).toHaveLength(0);
@@ -516,12 +516,12 @@ describe('Watchlist (e2e)', () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       await http()
-        .delete(`/watchlist/${id}`)
+        .delete(`/api/watchlist/${id}`)
         .set(...bearer(bob))
         .expect(404);
 
       await http()
-        .get(`/watchlist/${id}`)
+        .get(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .expect(200);
     });
@@ -529,7 +529,7 @@ describe('Watchlist (e2e)', () => {
     it('lets the user add the movie again afterwards', async () => {
       const { id } = await add(alice, DUNE.tmdbId);
       await http()
-        .delete(`/watchlist/${id}`)
+        .delete(`/api/watchlist/${id}`)
         .set(...bearer(alice))
         .expect(204);
 
@@ -578,7 +578,7 @@ describe('Watchlist (e2e)', () => {
 
   describe('public movie routes and app-wide behaviour', () => {
     it('searches movies without a token', async () => {
-      const res = await http().get('/movies/search?query=dune').expect(200);
+      const res = await http().get('/api/movies/search?query=dune').expect(200);
 
       expect(res.body.totalResults).toBe(2);
       expect(res.body.results.map((m: { title: string }) => m.title)).toEqual([
@@ -588,14 +588,14 @@ describe('Watchlist (e2e)', () => {
     });
 
     it('returns one movie, 404 for an unknown one, and 400 for bad input, all without a token', async () => {
-      await http().get(`/movies/${DUNE.tmdbId}`).expect(200, DUNE);
-      await http().get('/movies/2147483647').expect(404);
-      await http().get('/movies/abc').expect(400);
-      await http().get('/movies/search').expect(400);
+      await http().get(`/api/movies/${DUNE.tmdbId}`).expect(200, DUNE);
+      await http().get('/api/movies/2147483647').expect(404);
+      await http().get('/api/movies/abc').expect(400);
+      await http().get('/api/movies/search').expect(400);
     });
 
     it('sends security headers and hides the framework', async () => {
-      const res = await http().get('/movies/search?query=dune');
+      const res = await http().get('/api/movies/search?query=dune');
 
       expect(res.headers['x-content-type-options']).toBe('nosniff');
       expect(res.headers['strict-transport-security']).toBeDefined();
@@ -604,7 +604,7 @@ describe('Watchlist (e2e)', () => {
 
     it('answers an unknown route with a JSON 404, without a stack trace', async () => {
       const res = await http()
-        .get('/does-not-exist')
+        .get('/api/does-not-exist')
         .set(...bearer(alice))
         .expect(404);
 
@@ -612,20 +612,41 @@ describe('Watchlist (e2e)', () => {
       expect(res.text).not.toMatch(/at .*\(.*\.(js|ts):\d+/);
     });
 
-    it('allows the configured CORS origin and no other', async () => {
-      const allowed = await http()
-        .options('/watchlist')
+    it('serves routes under /api only', async () => {
+      await http()
+        .get('/watchlist')
+        .set(...bearer(alice))
+        .expect(404);
+      await http()
+        .get('/api/watchlist')
+        .set(...bearer(alice))
+        .expect(200);
+    });
+
+    it('marks every response no-store, including errors', async () => {
+      const ok = await http().get('/api/movies/search?query=dune');
+      const notFound = await http().get('/api/does-not-exist');
+      const unauthorized = await http().get('/api/watchlist');
+
+      for (const res of [ok, notFound, unauthorized]) {
+        expect(res.headers['cache-control']).toBe('no-store');
+      }
+    });
+
+    it('answers GET /api/health without a token', async () => {
+      const res = await http().get('/api/health').expect(200);
+
+      expect(res.body).toEqual({ status: 'ok' });
+    });
+
+    it('sends no CORS headers, as the API is same-origin behind the Vercel proxy', async () => {
+      const res = await http()
+        .options('/api/watchlist')
         .set('Origin', 'http://localhost:3000')
         .set('Access-Control-Request-Method', 'POST');
-      const denied = await http()
-        .options('/watchlist')
-        .set('Origin', 'http://evil.example')
-        .set('Access-Control-Request-Method', 'POST');
 
-      expect(allowed.headers['access-control-allow-origin']).toBe(
-        'http://localhost:3000',
-      );
-      expect(denied.headers['access-control-allow-origin']).toBeUndefined();
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+      expect(res.headers['access-control-allow-credentials']).toBeUndefined();
     });
   });
 });

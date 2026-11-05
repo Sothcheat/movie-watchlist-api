@@ -13,7 +13,6 @@ Object.assign(process.env, {
   JWT_ACCESS_TTL: '15m',
   JWT_REFRESH_SECRET: 'e2e-refresh-secret-fedcba9876543210fedcba9876',
   JWT_REFRESH_TTL: '7d',
-  CORS_ORIGINS: 'http://localhost:3000',
   TMDB_ACCESS_TOKEN: 'e2e-dummy-token',
   // A closed port: a TMDB call that isn't replaced by the fake fails fast and never leaves the machine.
   TMDB_BASE_URL: 'http://127.0.0.1:9/3',

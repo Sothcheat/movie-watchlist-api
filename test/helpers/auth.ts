@@ -32,11 +32,11 @@ export async function signUp(
 ): Promise<Session> {
   const email = `${tag}-${Date.now()}-${counter++}@example.com`;
   await request(app.getHttpServer())
-    .post('/auth/register')
+    .post('/api/auth/register')
     .send({ email, password: PASSWORD })
     .expect(201);
   const res = await request(app.getHttpServer())
-    .post('/auth/login')
+    .post('/api/auth/login')
     .send({ email, password: PASSWORD })
     .expect(200);
   return {
