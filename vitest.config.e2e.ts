@@ -6,7 +6,11 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
-    // No e2e specs yet; remove this when the first one lands (Step 8).
-    passWithNoTests: true,
+    setupFiles: ['./test/setup-env.ts'],
+    // All files share one test database, so they must not run at the same time.
+    fileParallelism: false,
+    // argon2 hashing, migrations and app start-up are slower than a unit test.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
 });
