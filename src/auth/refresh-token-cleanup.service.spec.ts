@@ -19,9 +19,11 @@ const ids = (count: number, prefix = 'id') =>
 describe('RefreshTokenCleanupService', () => {
   let service: RefreshTokenCleanupService;
   const refreshTokens = { find: vi.fn(), delete: vi.fn() };
+  let nodeEnv: string;
 
   beforeEach(async () => {
     vi.resetAllMocks();
+    nodeEnv = 'test';
     refreshTokens.delete.mockImplementation((given: string[]) =>
       Promise.resolve({ affected: given.length }),
     );
@@ -32,7 +34,10 @@ describe('RefreshTokenCleanupService', () => {
         { provide: getRepositoryToken(RefreshToken), useValue: refreshTokens },
         {
           provide: ConfigService,
-          useValue: { get: () => RETENTION_SECONDS },
+          useValue: {
+            get: (key: string) =>
+              key === 'NODE_ENV' ? nodeEnv : RETENTION_SECONDS,
+          },
         },
       ],
     }).compile();
@@ -129,6 +134,27 @@ describe('RefreshTokenCleanupService', () => {
         'Refresh token purge failed',
         expect.stringContaining('connection lost'),
       );
+    });
+  });
+
+  describe('onApplicationBootstrap', () => {
+    it('runs the purge once in production, without waiting for it', () => {
+      nodeEnv = 'production';
+      const run = vi
+        .spyOn(service, 'handleCron')
+        .mockReturnValue(new Promise(() => undefined));
+
+      expect(service.onApplicationBootstrap()).toBeUndefined();
+      expect(run).toHaveBeenCalledOnce();
+    });
+
+    it.each(['development', 'test'])('does nothing in %s', (env) => {
+      nodeEnv = env;
+      const run = vi.spyOn(service, 'handleCron');
+
+      service.onApplicationBootstrap();
+
+      expect(run).not.toHaveBeenCalled();
     });
   });
 });

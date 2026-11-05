@@ -14,8 +14,11 @@ if (existsSync('.env')) {
 // (a *.ts glob would also pick up the generated .d.ts files).
 const srcRoot = join(import.meta.dirname, '..');
 
+const env = dbEnvSchema.parse(process.env);
+
 export default new DataSource({
-  ...buildDataSourceOptions(dbEnvSchema.parse(process.env)),
+  // Migrations take Neon's direct host: PgBouncer in transaction mode can't hold their locks.
+  ...buildDataSourceOptions(env, env.DATABASE_URL_UNPOOLED ?? env.DATABASE_URL),
   entities: [join(srcRoot, '**', '*.entity.js')],
   migrations: [join(import.meta.dirname, 'migrations', '*.js')],
 });

@@ -1,7 +1,14 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type { Env } from '../config/env.schema.js';
 import { TmdbService } from '../tmdb/tmdb.service.js';
 import { WatchlistItem } from './watchlist-item.entity.js';
 
@@ -30,14 +37,22 @@ export interface RefreshResult {
  * fails is passed over instead of being retried in a loop within the same run.
  */
 @Injectable()
-export class WatchlistSnapshotRefreshService {
+export class WatchlistSnapshotRefreshService implements OnApplicationBootstrap {
   private readonly logger = new Logger(WatchlistSnapshotRefreshService.name);
 
   constructor(
     @InjectRepository(WatchlistItem)
     private readonly items: Repository<WatchlistItem>,
     private readonly tmdb: TmdbService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
+
+  /** Same as RefreshTokenCleanupService: the 04:00 run is often slept through on Render. */
+  onApplicationBootstrap(): void {
+    if (this.config.get('NODE_ENV', { infer: true }) === 'production') {
+      void this.handleCron();
+    }
+  }
 
   @Cron(CronExpression.EVERY_DAY_AT_4AM, {
     name: 'watchlist-snapshot-refresh',

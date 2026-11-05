@@ -1,4 +1,5 @@
 import { BadGatewayException, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TmdbService } from '../tmdb/tmdb.service.js';
@@ -36,6 +37,7 @@ describe('WatchlistSnapshotRefreshService', () => {
   };
   const items = { createQueryBuilder: vi.fn(), update: vi.fn() };
   const tmdb = { getMovie: vi.fn() };
+  const config = { get: vi.fn() };
 
   beforeEach(async () => {
     vi.resetAllMocks();
@@ -59,6 +61,7 @@ describe('WatchlistSnapshotRefreshService', () => {
         WatchlistSnapshotRefreshService,
         { provide: getRepositoryToken(WatchlistItem), useValue: items },
         { provide: TmdbService, useValue: tmdb },
+        { provide: ConfigService, useValue: config },
       ],
     }).compile();
     service = moduleRef.get(WatchlistSnapshotRefreshService);
@@ -199,6 +202,28 @@ describe('WatchlistSnapshotRefreshService', () => {
         'Watchlist snapshot refresh stopped early',
         expect.any(String),
       );
+    });
+  });
+
+  describe('onApplicationBootstrap', () => {
+    it('runs the refresh once in production, without waiting for it', () => {
+      config.get.mockReturnValue('production');
+      const run = vi
+        .spyOn(service, 'handleCron')
+        .mockReturnValue(new Promise(() => undefined));
+
+      expect(service.onApplicationBootstrap()).toBeUndefined();
+      expect(config.get).toHaveBeenCalledWith('NODE_ENV', { infer: true });
+      expect(run).toHaveBeenCalledOnce();
+    });
+
+    it.each(['development', 'test'])('does nothing in %s', (env) => {
+      config.get.mockReturnValue(env);
+      const run = vi.spyOn(service, 'handleCron');
+
+      service.onApplicationBootstrap();
+
+      expect(run).not.toHaveBeenCalled();
     });
   });
 });

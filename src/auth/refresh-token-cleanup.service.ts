@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,7 +17,7 @@ export const PURGE_BATCH_SIZE = 1000;
  * strategy rejects it before the database is consulted, so the row is no longer needed.
  */
 @Injectable()
-export class RefreshTokenCleanupService {
+export class RefreshTokenCleanupService implements OnApplicationBootstrap {
   private readonly logger = new Logger(RefreshTokenCleanupService.name);
 
   constructor(
@@ -25,6 +25,16 @@ export class RefreshTokenCleanupService {
     private readonly refreshTokens: Repository<RefreshToken>,
     private readonly config: ConfigService<Env, true>,
   ) {}
+
+  /**
+   * Render's free plan sleeps when idle, so the 03:00 run is often missed. In production, run
+   * once on every start as well, in the background. handleCron never throws.
+   */
+  onApplicationBootstrap(): void {
+    if (this.config.get('NODE_ENV', { infer: true }) === 'production') {
+      void this.handleCron();
+    }
+  }
 
   // 03:00 UTC. waitForCompletion skips a tick if the previous run is still going.
   @Cron(CronExpression.EVERY_DAY_AT_3AM, {

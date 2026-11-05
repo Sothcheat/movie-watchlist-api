@@ -56,6 +56,130 @@ describe('envSchema', () => {
   });
 });
 
+describe('DATABASE_URL', () => {
+  const { DB_USER: _u, DB_PASSWORD: _p, DB_NAME: _n, ...withoutDb } = valid;
+  const URL = 'postgresql://app:pw@db.example.com/movies?sslmode=verify-full';
+
+  it('replaces DB_USER, DB_PASSWORD and DB_NAME', () => {
+    expect(
+      envSchema.safeParse({ ...withoutDb, DATABASE_URL: URL }).success,
+    ).toBe(true);
+    expect(
+      dbEnvSchema.safeParse({ ...withoutDb, DATABASE_URL: URL }).success,
+    ).toBe(true);
+  });
+
+  it('names each missing DB_* variable when there is no URL', () => {
+    const result = envSchema.safeParse(withoutDb);
+
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([
+      ['DB_USER'],
+      ['DB_PASSWORD'],
+      ['DB_NAME'],
+    ]);
+  });
+
+  it.each(['https://db.example.com/movies', 'not a url'])(
+    'rejects %j',
+    (value) => {
+      expect(
+        envSchema.safeParse({ ...valid, DATABASE_URL: value }).success,
+      ).toBe(false);
+    },
+  );
+});
+
+describe('ORIGIN_SECRET', () => {
+  it('is optional outside production', () => {
+    expect(envSchema.parse(valid).ORIGIN_SECRET).toBeUndefined();
+  });
+
+  it('must be 32+ characters when set', () => {
+    expect(
+      envSchema.safeParse({ ...valid, ORIGIN_SECRET: 'o'.repeat(31) }).success,
+    ).toBe(false);
+    expect(
+      envSchema.safeParse({ ...valid, ORIGIN_SECRET: 'o'.repeat(32) }).success,
+    ).toBe(true);
+  });
+});
+
+describe('production guards', () => {
+  const NEON =
+    'postgresql://app:pw@ep-x-pooler.neon.tech/movies?sslmode=verify-full';
+  const NEON_DIRECT =
+    'postgresql://app:pw@ep-x.neon.tech/movies?sslmode=verify-full';
+  const production = {
+    ...valid,
+    NODE_ENV: 'production',
+    DATABASE_URL: NEON,
+    DATABASE_URL_UNPOOLED: NEON_DIRECT,
+    ORIGIN_SECRET: 'o'.repeat(32),
+  };
+  const failedPaths = (env: Record<string, unknown>) =>
+    envSchema.safeParse(env).error?.issues.map((issue) => issue.path);
+
+  it('accepts a complete production config', () => {
+    expect(envSchema.safeParse(production).success).toBe(true);
+  });
+
+  it('requires ORIGIN_SECRET', () => {
+    const { ORIGIN_SECRET: _omitted, ...rest } = production;
+
+    expect(failedPaths(rest)).toEqual([['ORIGIN_SECRET']]);
+  });
+
+  it('rejects a short ORIGIN_SECRET', () => {
+    expect(failedPaths({ ...production, ORIGIN_SECRET: 'short' })).toEqual([
+      ['ORIGIN_SECRET'],
+    ]);
+  });
+
+  it.each(['DATABASE_URL', 'DATABASE_URL_UNPOOLED'] as const)(
+    'requires %s',
+    (key) => {
+      const { [key]: _omitted, ...rest } = production;
+
+      expect(failedPaths(rest)).toEqual([[key]]);
+    },
+  );
+
+  it.each([
+    ['sslmode=require', NEON.replace('verify-full', 'require')],
+    ['no sslmode', NEON.replace('?sslmode=verify-full', '')],
+  ])('rejects a DATABASE_URL with %s', (_label, url) => {
+    expect(failedPaths({ ...production, DATABASE_URL: url })).toEqual([
+      ['DATABASE_URL'],
+    ]);
+  });
+
+  it('applies the URL rules to the CLI schema too', () => {
+    const { DATABASE_URL_UNPOOLED: _omitted, ...rest } = production;
+
+    expect(dbEnvSchema.safeParse(rest).success).toBe(false);
+  });
+
+  it.each(['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const)(
+    'rejects the .env.example placeholder for %s',
+    (key) => {
+      const placeholder = `change-me-${key}`.padEnd(40, '-');
+
+      expect(failedPaths({ ...production, [key]: placeholder })).toEqual([
+        [key],
+      ]);
+    },
+  );
+
+  it('allows placeholder secrets outside production', () => {
+    expect(
+      envSchema.safeParse({
+        ...valid,
+        JWT_ACCESS_SECRET: 'change-me-to-a-random-string-of-32-plus-chars',
+      }).success,
+    ).toBe(true);
+  });
+});
+
 describe('JWT settings', () => {
   it.each([
     ['30s', 30],

@@ -17,3 +17,9 @@ Object.assign(process.env, {
   // A closed port: a TMDB call that isn't replaced by the fake fails fast and never leaves the machine.
   TMDB_BASE_URL: 'http://127.0.0.1:9/3',
 });
+
+// Never inherited from .env: tests connect through DB_* (see buildDataSourceOptions), and the
+// origin lock stays off unless a suite turns it on.
+for (const key of ['DATABASE_URL', 'DATABASE_URL_UNPOOLED', 'ORIGIN_SECRET']) {
+  delete process.env[key];
+}
