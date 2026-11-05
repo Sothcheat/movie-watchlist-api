@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
 import { CommonModule } from './common/common.module.js';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
+import { TmdbModule } from './tmdb/tmdb.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module.js';
     DatabaseModule,
     UsersModule,
     AuthModule,
+    TmdbModule,
   ],
   providers: [
     // Order matters: rate limiting runs before authentication.

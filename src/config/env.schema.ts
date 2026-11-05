@@ -53,7 +53,6 @@ export const dbEnvSchema = z.object({
 
 /**
  * Everything the app needs at startup. Validation failure stops the app from booting.
- * Later steps extend this as modules arrive (TMDB).
  */
 export const envSchema = dbEnvSchema
   .extend({
@@ -65,6 +64,12 @@ export const envSchema = dbEnvSchema
     JWT_REFRESH_TTL: duration,
     /** How long an expired refresh-token row is kept before the nightly purge deletes it. */
     REFRESH_TOKEN_RETENTION: z.string().default('7d').pipe(duration),
+    /** TMDB "API Read Access Token" (a JWT), sent as a Bearer token. Never logged. */
+    TMDB_ACCESS_TOKEN: z.string().min(1),
+    TMDB_BASE_URL: z
+      .url()
+      .default('https://api.themoviedb.org/3')
+      .transform((url) => url.replace(/\/+$/, '')),
   })
   .refine((env) => env.JWT_ACCESS_SECRET !== env.JWT_REFRESH_SECRET, {
     message: 'must differ from JWT_ACCESS_SECRET',

@@ -9,6 +9,7 @@ const valid = {
   JWT_ACCESS_TTL: '15m',
   JWT_REFRESH_SECRET: 'r'.repeat(32),
   JWT_REFRESH_TTL: '7d',
+  TMDB_ACCESS_TOKEN: 'tmdb-token',
 };
 
 describe('envSchema', () => {
@@ -134,6 +135,37 @@ describe('REFRESH_TOKEN_RETENTION', () => {
   it.each(['7', '1w', '0d', ''])('rejects %j', (value) => {
     expect(
       envSchema.safeParse({ ...valid, REFRESH_TOKEN_RETENTION: value }).success,
+    ).toBe(false);
+  });
+});
+
+describe('TMDB settings', () => {
+  it('requires an access token', () => {
+    const { TMDB_ACCESS_TOKEN: _omitted, ...rest } = valid;
+
+    expect(envSchema.safeParse(rest).success).toBe(false);
+    expect(
+      envSchema.safeParse({ ...valid, TMDB_ACCESS_TOKEN: '' }).success,
+    ).toBe(false);
+  });
+
+  it('defaults the base URL to the v3 API', () => {
+    expect(envSchema.parse(valid).TMDB_BASE_URL).toBe(
+      'https://api.themoviedb.org/3',
+    );
+  });
+
+  it('strips trailing slashes from the base URL', () => {
+    expect(
+      envSchema.parse({ ...valid, TMDB_BASE_URL: 'https://tmdb.test/3//' })
+        .TMDB_BASE_URL,
+    ).toBe('https://tmdb.test/3');
+  });
+
+  it('rejects a base URL that is not a URL', () => {
+    expect(
+      envSchema.safeParse({ ...valid, TMDB_BASE_URL: 'api.themoviedb.org' })
+        .success,
     ).toBe(false);
   });
 });
