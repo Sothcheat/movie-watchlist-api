@@ -20,5 +20,28 @@ services:
       timeout: 3s
       retries: 10
 
+  # `docker compose up -d postgres` starts only the database (for `pnpm start:dev` on the host).
+  # `docker compose up --build` also builds and runs the API in a container.
+  api:
+    build: .
+    image: movie-watchlist-api:local
+    init: true
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Same settings as `pnpm start:dev`; the variables below replace the ones that differ in Docker.
+    env_file: .env
+    environment:
+      # Inside the compose network the database is "postgres" on its own port, not localhost:5433.
+      DB_HOST: postgres
+      DB_PORT: "5432"
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
 volumes:
   pgdata:

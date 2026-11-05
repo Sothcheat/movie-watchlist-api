@@ -1,0 +1,28 @@
+# Secrets and local config must never end up in an image layer.
+.env
+.env.*
+
+# Rebuilt inside the image.
+node_modules
+dist
+coverage
+*.tsbuildinfo
+
+# Not needed to build or run.
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+test
+docs
+*.md
+vitest.config*.ts
+.oxlintrc.json
+.prettierrc
+
+# Docker files themselves, and the database init script (only the entrypoint is used).
+Dockerfile
+.dockerignore
+docker-compose*.yml
+docker/postgres
