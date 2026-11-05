@@ -11,6 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { minutes, Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { CreateWatchlistItemDto } from './dto/create-watchlist-item.dto.js';
@@ -22,6 +23,7 @@ import { WatchlistService } from './watchlist.service.js';
  * Every route needs a valid access token (the global JwtAuthGuard; nothing here is @Public),
  * and every operation is limited to the caller's own items.
  */
+@ApiBearerAuth()
 @Controller('watchlist')
 export class WatchlistController {
   constructor(private readonly watchlist: WatchlistService) {}

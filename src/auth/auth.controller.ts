@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { minutes, Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -85,6 +86,7 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE, this.refreshCookieOptions());
   }
 
+  @ApiBearerAuth()
   @Get('me')
   async me(@CurrentUser('id') userId: string) {
     const user = await this.users.findById(userId);

@@ -639,6 +639,15 @@ describe('Watchlist (e2e)', () => {
       expect(res.body).toEqual({ status: 'ok' });
     });
 
+    it('serves the OpenAPI docs outside production', async () => {
+      await http().get('/api/docs').expect(200);
+      const res = await http().get('/api/docs-json').expect(200);
+
+      expect(res.body.info.title).toBe('Movie Watchlist API');
+      expect(res.body.paths).toHaveProperty(['/api/watchlist']);
+      expect(res.body.components.securitySchemes).toHaveProperty('bearer');
+    });
+
     it('sends no CORS headers, as the API is same-origin behind the Vercel proxy', async () => {
       const res = await http()
         .options('/api/watchlist')

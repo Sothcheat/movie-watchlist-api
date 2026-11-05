@@ -5,6 +5,7 @@ import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { originSecretMiddleware } from './common/middleware/origin-secret.middleware.js';
 import type { Env } from './config/env.schema.js';
+import { setupSwagger } from './swagger.setup.js';
 
 export const GLOBAL_PREFIX = 'api';
 
@@ -26,4 +27,5 @@ export function configureApp(app: INestApplication): void {
     next();
   });
   app.use(cookieParser());
+  setupSwagger(app);
 }

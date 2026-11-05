@@ -1,5 +1,7 @@
 allowBuilds:
   argon2: true
+  # Install-time analytics pulled in by swagger-ui-dist; not needed to serve the docs.
+  '@scarf/scarf': false
 
 # Fail the install if any dependency has an unreviewed postinstall script.
 strictDepBuilds: true
