@@ -1,10 +1,17 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { ConfigModule } from '@nestjs/config';
+import { envSchema } from './config/env.schema.js';
+import { DatabaseModule } from './database/database.module.js';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      // Standard Schema validation: the app refuses to boot on a bad or missing variable.
+      validationSchema: envSchema,
+    }),
+    DatabaseModule,
+  ],
 })
 export class AppModule {}
