@@ -1,0 +1,8 @@
+allowBuilds:
+  argon2: true
+
+# Fail the install if any dependency has an unreviewed postinstall script.
+strictDepBuilds: true
+
+# Only install versions published at least 7 days ago (value is minutes).
+minimumReleaseAge: 10080
