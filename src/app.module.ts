@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { CommonModule } from './common/common.module.js';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
 
@@ -11,6 +12,7 @@ import { DatabaseModule } from './database/database.module.js';
       // Standard Schema validation: the app refuses to boot on a bad or missing variable.
       validationSchema: envSchema,
     }),
+    CommonModule,
     DatabaseModule,
   ],
 })
