@@ -7,7 +7,6 @@ import type { Env } from '../../config/env.schema.js';
 import { JWT_STRATEGY } from '../auth.constants.js';
 import type { AccessTokenPayload } from '../auth.types.js';
 
-/** Verifies the access token from `Authorization: Bearer <token>` on every protected route. */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, JWT_STRATEGY) {
   constructor(config: ConfigService<Env, true>) {

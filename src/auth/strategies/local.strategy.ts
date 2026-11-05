@@ -10,7 +10,7 @@ import {
 } from '../auth.constants.js';
 import { AuthService } from '../auth.service.js';
 
-/** Checks email + password on POST /auth/login. Runs as a guard, i.e. before any DTO validation. */
+/** Runs on POST /auth/login as a guard, i.e. before any DTO validation. */
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, LOCAL_STRATEGY) {
   constructor(private readonly auth: AuthService) {

@@ -22,7 +22,6 @@ describe('RefreshTokenCleanupService', () => {
 
   beforeEach(async () => {
     vi.resetAllMocks();
-    // delete() reports as many rows as it was given ids
     refreshTokens.delete.mockImplementation((given: string[]) =>
       Promise.resolve({ affected: given.length }),
     );

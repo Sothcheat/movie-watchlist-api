@@ -12,9 +12,9 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor.js';
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
-        whitelist: true, // strip properties without a validation decorator
-        forbidNonWhitelisted: true, // ...and reject the request instead of silently dropping them
-        transform: true, // payloads become DTO instances, :id params get their declared type
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
       }),
     },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

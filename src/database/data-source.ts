@@ -4,8 +4,8 @@ import { DataSource } from 'typeorm';
 import { dbEnvSchema } from '../config/env.schema.js';
 import { buildDataSourceOptions } from './typeorm.options.js';
 
-// Entry point for the TypeORM CLI only (the Nest app uses DatabaseModule).
-// TypeORM 1.x no longer loads .env itself; skip the file when it's absent (e.g. in Docker).
+// Used by the TypeORM CLI only; the Nest app uses DatabaseModule.
+// TypeORM 1.x no longer loads .env itself; the file is optional (absent in Docker).
 if (existsSync('.env')) {
   process.loadEnvFile();
 }

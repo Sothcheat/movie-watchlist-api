@@ -4,7 +4,7 @@ const port = z.coerce.number().int().min(1).max(65535);
 
 const UNIT_SECONDS = { s: 1, m: 60, h: 3600, d: 86400 } as const;
 
-/** A duration such as `15m` or `7d`, parsed to seconds. One number drives the JWT, cookie and DB expiry. */
+/** A duration such as `15m` or `7d`, parsed to seconds. */
 const duration = z
   .string()
   .regex(/^\d+[smhd]$/, 'must look like 30s, 15m, 12h or 7d')
@@ -14,7 +14,7 @@ const duration = z
   })
   .pipe(z.number().int().positive());
 
-/** HMAC secrets for HS256: at least 32 characters (256 bits of ASCII). */
+/** HS256 signing secret. The app enforces 32+ characters; generate 32 random bytes (see .env.example). */
 const jwtSecret = z.string().min(32);
 
 /** Comma-separated browser origins. Exact origins only: no wildcard, path or trailing slash. */
@@ -51,9 +51,6 @@ export const dbEnvSchema = z.object({
   DB_TEST_NAME: z.string().min(1).default('movie_watchlist_test'),
 });
 
-/**
- * Everything the app needs at startup. Validation failure stops the app from booting.
- */
 export const envSchema = dbEnvSchema
   .extend({
     PORT: port.default(3000),
@@ -64,7 +61,7 @@ export const envSchema = dbEnvSchema
     JWT_REFRESH_TTL: duration,
     /** How long an expired refresh-token row is kept before the nightly purge deletes it. */
     REFRESH_TOKEN_RETENTION: z.string().default('7d').pipe(duration),
-    /** TMDB "API Read Access Token" (a JWT), sent as a Bearer token. Never logged. */
+    /** TMDB "API Read Access Token", sent as a Bearer token. */
     TMDB_ACCESS_TOKEN: z.string().min(1),
     TMDB_BASE_URL: z
       .url()

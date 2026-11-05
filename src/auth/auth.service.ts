@@ -53,7 +53,6 @@ export class AuthService {
     return { id: user.id, role: user.role };
   }
 
-  /** A login starts a new refresh-token family. */
   login(user: AuthUser): Promise<TokenPair> {
     return this.issueTokens(user, randomUUID());
   }

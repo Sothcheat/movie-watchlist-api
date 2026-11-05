@@ -2,7 +2,7 @@
 export interface Movie {
   tmdbId: number;
   title: string;
-  /** TMDB sends "" when there is none. */
+  /** null when TMDB has none (it sends ""). */
   overview: string | null;
   /** Path only, e.g. "/abc.jpg"; clients prepend TMDB's image base URL. */
   posterPath: string | null;

@@ -1,7 +1,4 @@
-/**
- * The shape of `request.user` once a request is authenticated.
- * The JWT strategy (Step 5) must return exactly this from `validate()`.
- */
+/** `request.user` on authenticated routes; the JWT strategy's `validate()` returns this. */
 export interface AuthUser {
   id: string;
   role: string;

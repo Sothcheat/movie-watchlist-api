@@ -37,7 +37,7 @@ export class RefreshTokenCleanupService {
       const deleted = await this.purgeExpired();
       this.logger.log(`Purged ${deleted} expired refresh token(s)`);
     } catch (error) {
-      // The scheduler would log this too; keep the stack and move on to tomorrow's run.
+      // Log and carry on; tomorrow's run still happens.
       this.logger.error(
         'Refresh token purge failed',
         error instanceof Error ? error.stack : String(error),
@@ -45,7 +45,7 @@ export class RefreshTokenCleanupService {
     }
   }
 
-  /** Returns how many rows were deleted. `now` is a parameter so tests control the clock. */
+  /** Returns the number of rows deleted. */
   async purgeExpired(now: Date = new Date()): Promise<number> {
     const retentionSeconds = this.config.get('REFRESH_TOKEN_RETENTION', {
       infer: true,

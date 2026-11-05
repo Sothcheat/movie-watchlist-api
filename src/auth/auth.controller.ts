@@ -26,7 +26,6 @@ import { RegisterDto } from './dto/register.dto.js';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard.js';
 import { LocalAuthGuard } from './guards/local-auth.guard.js';
 
-/** Brute-force limit for the credential and token endpoints. */
 const AUTH_THROTTLE = { default: { limit: 5, ttl: minutes(1) } };
 
 type RefreshRequest = Request & { user: RefreshPrincipal };

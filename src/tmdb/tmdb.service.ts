@@ -116,7 +116,6 @@ export class TmdbService {
         redirect: 'error',
       });
     } catch (error) {
-      // TimeoutError (see TMDB_TIMEOUT_MS) or a network failure.
       throw new TmdbRequestError(
         null,
         error instanceof Error ? error.name : 'unknown error',

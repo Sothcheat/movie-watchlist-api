@@ -20,7 +20,6 @@ export const cookieHeader = (setCookie: string): string =>
 export interface Session {
   email: string;
   accessToken: string;
-  /** Value for a Cookie header. */
   refreshCookie: string;
 }
 

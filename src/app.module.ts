@@ -18,10 +18,8 @@ import { WatchlistModule } from './watchlist/watchlist.module.js';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      // Standard Schema validation: the app refuses to boot on a bad or missing variable.
       validationSchema: envSchema,
     }),
-    // Default limit per client IP; auth routes tighten it with @Throttle().
     ThrottlerModule.forRoot({ throttlers: [{ ttl: minutes(1), limit: 100 }] }),
     // Call forRoot() once only: each extra import would register every @Cron job again.
     ScheduleModule.forRoot(),

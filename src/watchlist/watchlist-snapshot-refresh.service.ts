@@ -39,7 +39,6 @@ export class WatchlistSnapshotRefreshService {
     private readonly tmdb: TmdbService,
   ) {}
 
-  // 04:00 UTC, an hour after the refresh-token purge.
   @Cron(CronExpression.EVERY_DAY_AT_4AM, {
     name: 'watchlist-snapshot-refresh',
     timeZone: 'UTC',
@@ -60,7 +59,6 @@ export class WatchlistSnapshotRefreshService {
     }
   }
 
-  /** `now` is a parameter so tests control the clock. */
   async refreshStale(now: Date = new Date()): Promise<RefreshResult> {
     const cutoff = new Date(now.getTime() - SNAPSHOT_MAX_AGE_DAYS * DAY_MS);
     const result: RefreshResult = { refreshed: 0, missing: 0 };

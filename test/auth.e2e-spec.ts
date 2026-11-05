@@ -39,7 +39,7 @@ describe('Auth (e2e)', () => {
         .expect(201, { message: 'Registration received' });
 
       const [user] = await userRows('new.user@example.com');
-      expect(user.email).toBe('new.user@example.com'); // normalised to lowercase
+      expect(user.email).toBe('new.user@example.com');
       expect(user.role).toBe('user');
       // OWASP minimum for Argon2id: 19 MiB memory, 2 iterations, 1 lane. node-argon2 writes
       // the parameters in the order m, p, t.

@@ -10,9 +10,8 @@ import { logRequest, markRequestLogged } from '../request-log.js';
 import type { AuthUser } from '../types/auth-user.type.js';
 
 /**
- * Times every request that reaches a route handler and logs one line when the response is sent.
- * Requests that never get here (rejected by a guard, or no matching route) are logged by
- * AllExceptionsFilter instead; see request-log.ts for what is and isn't logged.
+ * Times every request that reaches a route handler. Requests rejected by a guard or matching
+ * no route never get here; AllExceptionsFilter logs those.
  */
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {

@@ -18,7 +18,6 @@ import { buildDataSourceOptions } from './typeorm.options.js';
           DB_NAME: config.get('DB_NAME', { infer: true }),
           DB_TEST_NAME: config.get('DB_TEST_NAME', { infer: true }),
         }),
-        // Entities registered with TypeOrmModule.forFeature() are picked up automatically.
         autoLoadEntities: true,
       }),
     }),

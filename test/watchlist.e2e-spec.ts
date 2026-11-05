@@ -43,7 +43,7 @@ describe('Watchlist (e2e)', () => {
     return res.body as { id: string };
   };
 
-  describe('authentication (checklist 6)', () => {
+  describe('authentication', () => {
     it.each([
       ['GET', '/watchlist'],
       ['GET', `/watchlist/${MISSING_ID}`],
@@ -193,18 +193,15 @@ describe('Watchlist (e2e)', () => {
         { tmdbId: DUNE.tmdbId, userId: '00000000-0000-4000-8000-000000000001' },
       ],
       ['watched set on create', { tmdbId: DUNE.tmdbId, watched: true }],
-    ])(
-      'rejects %s with 400 and saves nothing (checklist 4)',
-      async (_label, body) => {
-        await http()
-          .post('/watchlist')
-          .set(...bearer(alice))
-          .send(body)
-          .expect(400);
+    ])('rejects %s with 400 and saves nothing', async (_label, body) => {
+      await http()
+        .post('/watchlist')
+        .set(...bearer(alice))
+        .send(body)
+        .expect(400);
 
-        expect(await db.query('SELECT 1 FROM watchlist_items')).toHaveLength(0);
-      },
-    );
+      expect(await db.query('SELECT 1 FROM watchlist_items')).toHaveLength(0);
+    });
   });
 
   describe('GET /watchlist', () => {
@@ -326,7 +323,7 @@ describe('Watchlist (e2e)', () => {
       });
     });
 
-    it('returns 404 for an item that does not exist (checklist 5)', async () => {
+    it('returns 404 for an item that does not exist', async () => {
       const res = await http()
         .get(`/watchlist/${MISSING_ID}`)
         .set(...bearer(alice))
@@ -469,7 +466,7 @@ describe('Watchlist (e2e)', () => {
       expect(row).toEqual({ watched: false, rating: null, priority: 'medium' });
     });
 
-    it('returns 404 for an item that does not exist (checklist 5)', async () => {
+    it('returns 404 for an item that does not exist', async () => {
       await http()
         .patch(`/watchlist/${MISSING_ID}`)
         .set(...bearer(alice))
@@ -495,7 +492,7 @@ describe('Watchlist (e2e)', () => {
   });
 
   describe('DELETE /watchlist/:id', () => {
-    it('removes the item: 204, then 404 on every later access (checklist 5)', async () => {
+    it('removes the item: 204, then 404 on every later access', async () => {
       const { id } = await add(alice, DUNE.tmdbId);
 
       const res = await http()
