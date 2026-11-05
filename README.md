@@ -39,6 +39,6 @@ cp .env.example .env              # then fill in the secrets and TMDB_ACCESS_TOK
 docker compose up -d postgres
 pnpm install
 pnpm run migration:run         # creates the tables
-pnpm run start:dev                # http://localhost:3000, docs at /api/docs
+pnpm run start:dev                # http://localhost:3000
 pnpm run test && pnpm run test:e2e
 ```
