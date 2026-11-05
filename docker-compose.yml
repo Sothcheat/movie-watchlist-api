@@ -7,8 +7,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
       POSTGRES_DB: ${DB_NAME:?set DB_NAME in .env}
     ports:
-      # Host port 5433 avoids clashing with other Postgres containers on 5432.
-      - "${DB_PORT:-5433}:5432"
+      # Host port 5433 avoids clashing with other Postgres containers on 5432. Bound to
+      # loopback so the database isn't reachable from the network.
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       # PostgreSQL 18+ keeps data in a version subdirectory, so mount the parent path.
       - pgdata:/var/lib/postgresql

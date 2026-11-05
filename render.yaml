@@ -1,0 +1,37 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Walkthrough, including the values to paste in: docs/deployment.md
+services:
+  - type: web
+    name: movie-watchlist-api
+    runtime: docker
+    plan: free
+    region: singapore
+    # Liveness only, no database query, so Render's checks don't keep Neon awake.
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Random 256-bit values, generated once when the Blueprint is created.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 7d
+      - key: REFRESH_TOKEN_RETENTION
+        value: 7d
+      - key: TMDB_BASE_URL
+        value: https://api.themoviedb.org/3
+      # Asked for in the dashboard when the Blueprint is first created, never stored in git.
+      # Render ignores sync: false on later Blueprint updates, so change these in the dashboard.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: ORIGIN_SECRET
+        sync: false
+      - key: TMDB_ACCESS_TOKEN
+        sync: false
